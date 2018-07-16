@@ -4,7 +4,7 @@
 		var $cc;
 		var $_legal=false;
 		var $_trabs=false;
-		function __construct( $representantes_legales=false, $cantidad_trabajadores=false )
+		function __construct( $representantes_legales=false, $cantidad_trabajadores=false, $carpetaCookies= __DIR__ . "/cookie.txt")
 		{
 			$this->_legal = $representantes_legales;
 			$this->_trabs = $cantidad_trabajadores;
@@ -12,7 +12,7 @@
 			$this->cc = new \Sunat\cURL();
 			$this->cc->setReferer( "http://e-consultaruc.sunat.gob.pe/cl-ti-itmrconsruc/frameCriterioBusqueda.jsp" );
 			$this->cc->useCookie( true );
-			$this->cc->setCookiFileLocation( __DIR__ . "/cookie.txt" );
+			$this->cc->setCookiFileLocation( $carpetaCookies );
 		}
 		
 		function getNumRand()
@@ -73,15 +73,30 @@
 					"Oficio" 				=> "Profesi&oacute;n u Oficio",
 					"ActividadEconomica" 	=> "Actividad\(es\) Econ&oacute;mica\(s\)",
 					"EmisionElectronica" 	=> "Emisor electr&oacute;nico desde",
-					"PLE" 					=> "Afiliado al PLE desde"
+					"PLE" 					=> "Afiliado al PLE desde",
+                    "ComprobantesElectrónicos"  => "Comprobantes Electr&oacute;nicos"
 				);
 				foreach($busca as $i=>$v)
 				{
-					$patron='/<td class="bgn"[ ]*colspan=1[ ]*>'.$v.':[ ]*<\/td>\r\n[\t]*[ ]+<td class="bg" colspan=[1|3]+>(.*)<\/td>/';
+					//Patrón original:
+                        //$patron='/<td class="bgn"[ ]*colspan=1[ ]*>'.$v.':[ ]*<\/td>\r\n[\t]*[ ]+<td class="bg" colspan=[1|3]+>(.*)<\/td>/';
+                    //Patrón Kendeclise:
+                    $patron='/<td class="bgn"[ ]*colspan=(.*)1(.*)[ ]*>'.$v.'[ ]*:[ ]*<\/td>[ ]*\r\n[\t]*[ ]+<td class="bg" colspan=(.*)[1|3]+(.*)>(.*)<\/td>/';
 					$output = preg_match_all($patron, $Page, $matches, PREG_SET_ORDER);
 					if(isset($matches[0]))
 					{
-						$rtn[$i] = trim(utf8_encode( preg_replace( "[\s+]"," ", ($matches[0][1]) ) ) );
+                        //Original:
+						  //$rtn[$i] = trim(utf8_encode( preg_replace( "[\s+]"," ", ($matches[0][1]) ) ) );
+                        //Kendeclise:
+                        $count = count($matches[0]);
+                        for($j=1; $j < $count; $j++)
+                        {
+                            if(!empty($matches[0][$j]))
+                            {
+                                $rtn[$i] = trim(utf8_encode( preg_replace( "[\s+]"," ", ($matches[0][$j]) ) ) );
+                                break;
+                            }
+                        }
 					}
 				}
 			}
